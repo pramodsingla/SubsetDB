@@ -73,20 +73,19 @@ import-module $ScriptDir\Export-SQLTable2CSV -Force
 ############# MAIN ####################
 #Loop through each table in the XML file
 FOREACH( $Tables in $XmlSubsetTableList.DB.Table) {
+    $SchemaName=$Tables.SchemaName
     $TableName=$Tables.TableName
     $ClientKeyColumnName=$Tables.ClientKeyColumnName
     $DateRangeColumnName=$Tables.DateRangeColumnName
-    $SelectQuery=$Tables.SelectQuery
-
+    $SelectQuery=$Tables.SelectQuery 
     if ([string]::IsNullOrEmpty($TableName)){
        continue;
     }
     #set Csv file name
-    $CSVFileName=$TableName+".csv"
-
-    #set Select Query
+    $CSVFileName=$SchemaName.ToLower()+"_"+$TableName.ToLower()+".csv"
+        #set Select Query
     if([string]::IsNullOrEmpty($SelectQuery)){
-    $SelectQuery="select * from $TableName (nolock)"
+    $SelectQuery="select * from $SchemaName.$TableName (nolock)"
     }
 
     #####Add filters to select query######
