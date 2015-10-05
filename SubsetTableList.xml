@@ -29,8 +29,8 @@
     </SelectQuery>
   </Table>
   <Table>
-    <SchemaName>dbo</SchemaName>
-    <TableName>a</TableName>
+    <SchemaName>rlbk</SchemaName>
+    <TableName>test</TableName>
     <ClientKeyColumnName>
     </ClientKeyColumnName>
     <DateRangeColumnName>

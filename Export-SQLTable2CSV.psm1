@@ -1,7 +1,7 @@
 ﻿########################################################################################### 
 # Name         : Export-SQLTable2CSV
 # Author       : Pramod Singla (Ecova DBAs) 17th Sept 2015
-# Purpose      : It exports SQL table query data into CSV.
+# Purpose      : It exports SQL table data into CSV.
 # Test String  : Export-SQLTable2CSV -SQLServerName "localhost" -DBName "master" -SelectQuery "Select * from sysprocesses" -CSVFilePath "E:\"
 # Requires   : Script is developed and tested on PS vesion 4
 ########################################################################################## 
