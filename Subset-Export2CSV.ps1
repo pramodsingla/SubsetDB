@@ -51,8 +51,8 @@ $ScriptDir = Split-Path -parent $MyInvocation.MyCommand.Path
 
 #Check if servername or DB name is valid and exit if it is not
 IF([string]::IsNullOrEmpty($SQLServerName) -or [string]::IsNullOrEmpty($DBName)) {
-"server Name or database name is not valid."
-"Exiting....."
+write-host "server Name or database name is not valid." -foregroundcolor "RED"
+write-host "Exiting....." -foregroundcolor "RED"
 exit
 }
 
@@ -62,11 +62,60 @@ $CSVFilePath=$ScriptDir
 }
 #Check if CSV file path is valid and exit if it is not 
 IF(!(Test-Path $CSVFilePath) ) {
-"CSV file Path is not valid."
-"Exiting....."
+write-host "CSV file Path is not valid." -foregroundcolor "RED"
+write-host "Exiting....." -foregroundcolor "RED"
 exit
 }
+########Check whether clientkey exists in db or not###########
+$SelectQuery="select *from dbo.tbl_clientFeatures where clientkey="+$ClientKey
 
+#Setting a new database connection
+$ConnectionString = "Data Source=$SQLServerName; Database=$DBName; Trusted_Connection=True;";
+$sqlConn = New-Object System.Data.SqlClient.SqlConnection $ConnectionString 
+
+#Set command to pull data from the datbase table
+$sqlCmd = New-Object System.Data.SqlClient.SqlCommand 
+$sqlCmd.Connection = $sqlConn 
+$sqlCmd.CommandText = $SelectQuery 
+$sqlConn.Open();
+
+#Read data from data table
+$Reader = $sqlCmd.ExecuteReader();
+ 
+
+IF(!($Reader.HasRows) ) {
+write-host "ClientKey Doesn't exists in  $DBName.dbo.tbl_clientFeatures table." -foregroundcolor "RED"
+write-host "Exiting....." -foregroundcolor "RED"
+exit
+}
+############ Check From date is Valid or not ##############
+if (![string]::IsNullOrEmpty($FromDate)) {
+$FromDate = $FromDate -as [DateTime];
+if (!$FromDate )
+    {  
+    write-host "You entered an invalid From date." -foregroundcolor "RED"
+    write-host "Exiting....." -foregroundcolor "RED"
+    exit 
+    }
+}
+############ Check To date is Valid or not and to date must be greater than equal to from date##############
+if (![string]::IsNullOrEmpty($ToDate)) {
+$ToDate = $ToDate -as [DateTime];
+if (!$ToDate )
+    {  
+    write-host "You entered an invalid To date." -foregroundcolor "RED"
+    write-host "Exiting....." -foregroundcolor "RED"
+    exit 
+    }
+
+if ((get-date $FromDate) -gt (get-date $ToDate))
+    {  
+    write-host "You have entered from date greater than to date." -foregroundcolor "RED"
+    write-host "Exiting....." -foregroundcolor "RED"
+    exit 
+    }
+
+}
 ############ Import User Defined modules ##############
 import-module $ScriptDir\Export-SQLTable2CSV -Force
 
