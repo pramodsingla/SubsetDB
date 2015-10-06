@@ -2,7 +2,8 @@
 # Name         : Export-SQLTable2CSV
 # Author       : Pramod Singla (Ecova DBAs) 17th Sept 2015
 # Purpose      : It exports SQL table data into CSV.
-# Test String  : Export-SQLTable2CSV -SQLServerName "localhost" -DBName "master" -SelectQuery "Select * from sysprocesses" -CSVFilePath "E:\"
+# Test String  : Export-SQLTable2CSV -SQLServerName "localhost" -DBName "master" -SelectQuery "Select * from sysprocesses" -CSVFilePath "E:\" .
+#                If csv file is not specified then present working dir is used
 # Requires   : Script is developed and tested on PS vesion 4
 ########################################################################################## 
 ##Paramter setting
@@ -10,10 +11,12 @@ FUNCTION Export-SQLTable2CSV {
  [CmdletBinding()]
 PARAM
 (
+    [Parameter(Mandatory=$True)]
 	[string]$SQLServerName ,
+    [Parameter(Mandatory=$True)]
 	[string]$DBName,
     [string]$SelectQuery,
-    [string]$CSVFilePath = "C:\",
+    [string]$CSVFilePath,
     [String]$CSVFileName="test.csv",
     [string]$CSVDelimiter = "~" 
 )
@@ -22,13 +25,22 @@ TRY
 {
 ##Starting watch
 $elapsed = [System.Diagnostics.Stopwatch]::StartNew()  
+#Get current execution\script path
+$ScriptDir = Get-Location
+
+#If csv path is null then assign current dir
+if ([string]::IsNullOrEmpty($CSVFilePath)){
+
+$CSVFilePath=$ScriptDir
+}
+
+
 
 #setting the CSV file full name
 IF ($CSVFilePath.Substring($CSVFilePath.Length-1) -ne "\"){
     $CSVFilePath =$CSVFilePath +"\"
     }
 $CSVFileFullName=$CSVFilePath+$CSVFileName
-
 
 #Setting a new database connection
 $ConnectionString = "Data Source=$SQLServerName; Database=$DBName; Trusted_Connection=True;";
@@ -45,7 +57,7 @@ $sqlConn.Open();
 
 
 #Read data from data table
-$Reader = $sqlCmd.ExecuteReader(); 
+$Reader = $sqlCmd.ExecuteReader();
 
 #Initialze the array the hold the values 
 $Array = @() 
@@ -80,9 +92,17 @@ CATCH [Exception]
     }
 ###########Start finally#############
 FINALLY{
-# Clean Up 
-    $sqlConn.Close(); 
-    $StreamWriter.Close(); 
-    $Reader.Close(); 
+# Clean Up
+if ($sqlConn.State -eq 'Open')
+    {
+        $sqlConn.close();
+   }
+
+  $Reader.Close(); 
+
+  $StreamWriter.Close(); 
+ 
 }
+#######################
 }
+###############END of Function################

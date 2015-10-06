@@ -5,7 +5,7 @@
     <ClientKeyColumnName>clientKey</ClientKeyColumnName>
     <DateRangeColumnName>
     </DateRangeColumnName>
-    <SelectQuery>
+    <SelectQuery> select *from P
     </SelectQuery>
   </Table>
   <Table>

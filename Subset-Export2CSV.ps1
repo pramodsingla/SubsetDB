@@ -3,23 +3,28 @@
 # Author       : Pramod Singla (Ecova DBAs) 17th Sept 2015
 # Purpose      : It exports SQL table query data into CSV.
 # Test String  : .\Subset-Export2CSV.ps1  -ClientKey 2 
-#              : .\Subset-Export2CSV.ps1  -DBName "master" -ClientKey 2  -CSVFilePath E:\My_Work\Subset_EDGEDW\CSVFileFolder -FromDate "9-10-2014" -ToDate "10-10-2015"
+#              : .\Subset-Export2CSV.ps1 -SQLServerName "localhost" -DBName "master" -ClientKey 2  -CSVFilePath E:\My_Work\Subset_EDGEDW\CSVFileFolder -FromDate "9-10-2014" -ToDate "10-10-2015"
 # Mandatory Parameters: atleast Pass value of ClientKey or (FromDate and ToDate)
-# Requires     : Script is developed and tested on PS vesion 4, a XML file of following format
-#              <!-- TableList.xml -->
-#              <DB SQLServerName="localhost" DBName="EdgeDW">
-#              	<Table TableName="P">
-#              		<ClientKeyColumnName>ClientKey</ClientKeyColumnName>
-#              		<DateRangeColumnName>crdt</DateRangeColumnName>
-#              		<SelectQuery>SELECT * FROM p (nolock)</SelectQuery>
-#              	</Table>
-#              </DB>
+# Requires     : Script is developed and tested on PS vesion 4, a XML file of following format is used to fetch the list of tables to subset
+#              <!-- TableList.xml -->#
+#                <DB >
+#	                <Table>
+#                       <SchemaName></SchemaName>
+#                       <TableName></TableName>
+#		                <ClientKeyColumnName></ClientKeyColumnName>
+#		                <DateRangeColumnName></DateRangeColumnName>
+#		                <SelectQuery></SelectQuery>
+#	                </Table>
+#                </DB >
+#
+
 ########################################################################################## 
 ########## Paramter setting ##########################
 PARAM
 (   
-    [string]$SQLServerName ="localhost",
-	[string]$DBName ,
+    [Parameter(Mandatory=$True)]
+    [string]$SQLServerName,
+	[string]$DBName="EdgeDW" ,
     [string]$ClientKey,
     [string]$FromDate,  
     [string]$ToDate,  
@@ -30,8 +35,8 @@ TRY
 {
 #checking paramter values
 IF([string]::IsNullOrEmpty($ClientKey) -and ([string]::IsNullOrEmpty($FromDate) -or [string]::IsNullOrEmpty($ToDate))) {
-"Must specify clientkey or the date range"
-"Exiting....."
+write-host "Must specify clientkey or the date range" -foregroundcolor "RED"
+write-host "Exiting....." -foregroundcolor "RED"
 exit
 }
 ################## Setting Variables ###################
@@ -40,7 +45,7 @@ $CSVDelimiter = "~"
 #$DBName=$null
 
 #Get current execution\script path
-$ScriptDir = Split-Path -parent $MyInvocation.MyCommand.Path
+$ScriptDir = Get-Location
 
 #Read the table list to subset
 [xml]$XmlSubsetTableList = Get-Content -Path "$ScriptDir\SubsetTableList.xml"
@@ -67,6 +72,7 @@ write-host "Exiting....." -foregroundcolor "RED"
 exit
 }
 ########Check whether clientkey exists in db or not###########
+IF(![string]::IsNullOrEmpty($ClientKey)) {
 $SelectQuery="select *from dbo.tbl_clientFeatures where clientkey="+$ClientKey
 
 #Setting a new database connection
@@ -87,6 +93,7 @@ IF(!($Reader.HasRows) ) {
 write-host "ClientKey Doesn't exists in  $DBName.dbo.tbl_clientFeatures table." -foregroundcolor "RED"
 write-host "Exiting....." -foregroundcolor "RED"
 exit
+}
 }
 ############ Check From date is Valid or not ##############
 if (![string]::IsNullOrEmpty($FromDate)) {
@@ -180,6 +187,12 @@ CATCH [Exception]
     }
 ###########Start finally#############
 FINALLY{
-   
+if ($sqlConn.State -eq 'Open')
+    {
+        $sqlConn.close();
+   }
+
+    $Reader.Close(); 
+
 }
 
